@@ -1,0 +1,36 @@
+﻿@page "/"
+@using System.Drawing;
+@using BlazorPro.BlazorSize;
+@using Majorsoft.Blazor.Components.Maps
+@using Majorsoft.Blazor.Components.Maps.Google
+@inject IJSRuntime _jsRuntime
+@inject IResizeListener _resizeListener
+@using Toolbelt.Blazor.Splitter
+
+<PageTitle>Assets</PageTitle>
+
+<SplitContainer Id="splitter" Style="width: 100%; max-width: 100%; height: 100%; max-height: 100%; background-color: gray;"
+	@bind-FirstPaneSize="_paneSize"
+	Orientation="SplitterOrientation.Horizontal">
+	<FirstPane>
+		<h1>Hello</h1>
+	</FirstPane>
+	<SecondPane>
+		<div class="map-container">
+			<GoogleMap
+				@bind-Center="_jsMapCenter" @bind-Center:event="OnMapCenterChanged"
+				@bind-Zoom="_jsMapZoomLevel" @bind-Zoom:event="OnMapZoomLevelChanged"
+				OnMapInitialized="@(() => StateHasChanged())"
+				ApiKey="@_googleMapsApiKey"
+				StreetViewControl="false"
+				MapTypeControl="false"/>
+		</div>
+	</SecondPane>
+</SplitContainer>
+
+@code {
+	private int _paneSize = 80;
+	private string _googleMapsApiKey = "AIzaSyDGiDFTTOkFF8e6qk58Gj7IaWHdisGrrr4";
+	private GeolocationData _jsMapCenter = new GeolocationData("Utrecht");
+	private byte _jsMapZoomLevel = 10;
+}
