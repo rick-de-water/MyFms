@@ -1,10 +1,11 @@
-using BlazorPro.BlazorSize;
 using Majorsoft.Blazor.Components.Common.JsInterop;
 using Majorsoft.Blazor.Components.Maps;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MyFms.Application.Services;
+using MyFms.Infrastructure.Services;
 
-namespace MyFms;
+namespace MyFms.App;
 
 public class Program
 {
@@ -16,9 +17,12 @@ public class Program
 
         builder.Services
             .AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) })
-			.AddJsInteropExtensions()
+            .AddJsInteropExtensions()
             .AddMapExtensions()
-			.AddScoped<IResizeListener, ResizeListener>();
+            .AddSingleton<IMyFmsClient, MyFmsClient>()
+            .AddSingleton<EventMapService>()
+            .AddSingleton<IMapService>(provider => provider.GetRequiredService<EventMapService>());
+        
 
 		await builder.Build().RunAsync();
     }

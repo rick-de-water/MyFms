@@ -1,0 +1,66 @@
+﻿@using Majorsoft.Blazor.Components.Core.Extensions;
+@using Majorsoft.Blazor.Components.Maps;
+@using System.Diagnostics;
+@using Majorsoft.Blazor.Components.Maps.Google;
+@using MyFms.Infrastructure.Services;
+@implements IDisposable;
+@inject IMyFmsClient _myFmsClient;
+@inject EventMapService _mapService;
+
+<div class="map-container">
+	<GoogleMap @bind-Center="_mapCenter" @bind-Center:event="OnMapCenterChanged"
+		@bind-Zoom="_mapZoomLevel" @bind-Zoom:event="OnMapZoomLevelChanged"
+		Markers="@_markers"
+		OnMapInitialized="@(() => OnMapInitialized())"
+		ApiKey="@_googleMapsApiKey"
+		StreetViewControl="false"
+		MapTypeControl="false"/>
+</div>
+
+@code {
+	protected override void OnInitialized()
+	{
+		_mapService.OnMoveTo += OnMapMovedTo;
+	}
+
+	public void Dispose()
+	{
+		_mapService.OnMoveTo -= OnMapMovedTo;
+	}
+
+	private void OnMapInitialized()
+	{
+		InvokeAsync(() => UpdateMarkers());
+	}
+
+	private async Task UpdateMarkers(CancellationToken cancellationToken = default)
+	{
+		await foreach (var asset in _myFmsClient
+			.GetAssets(cancellationToken)
+			.Where(asset => asset.Position != null))
+		{
+			Debug.Assert(asset.Position != null);
+
+			var coordinates = new GeolocationCoordinate(asset.Position.Latitude, asset.Position.Longitude);
+
+			_markers.Add(new GoogleMapMarker(coordinates)
+				{
+					Draggable = false,
+					Clickable = false,
+				});
+		}
+	}
+
+	private void OnMapMovedTo(object? sender, MapMoveToEventArgs eventArgs)
+	{
+		_mapCenter = new GeolocationData(eventArgs.Latitude, eventArgs.Longitude);
+		InvokeAsync(() => StateHasChanged());
+	}
+
+
+	private readonly static string _googleMapsApiKey = "AIzaSyDGiDFTTOkFF8e6qk58Gj7IaWHdisGrrr4";
+
+	private readonly ObservableRangeCollection<GoogleMapMarker> _markers = new();
+	private GeolocationData _mapCenter = new GeolocationData("Utrecht");
+	private byte _mapZoomLevel = 10;
+}

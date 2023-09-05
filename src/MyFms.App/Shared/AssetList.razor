@@ -1,0 +1,58 @@
+﻿@using MyFms.Domain.Models
+@implements IDisposable
+@inject IMyFmsClient _myFmsClient
+@inject IMapService _mapService;
+
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (_assets != null)
+        @foreach (var asset in _assets)
+        {
+                <tr @onclick="() => OnAssetclicked(asset)">
+                <td>@asset.Type</td>
+                <td>@asset.Name</td>
+                <td>@(asset.Position?.Latitude.ToString() ?? "-")</td>
+                <td>@(asset.Position?.Longitude.ToString() ?? "-")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code
+{
+    protected override async Task OnInitializedAsync()
+    {
+        _myFmsClient.AssetsChanged += OnAssetsChanged;
+        await UpdateAssets();
+    }
+
+    public void Dispose()
+    {
+        _myFmsClient.AssetsChanged -= OnAssetsChanged;
+    }
+
+    private async void OnAssetsChanged(object? sender, EventArgs eventArgs) => await UpdateAssets();
+    private async Task UpdateAssets()
+    {
+        _assets = await _myFmsClient.GetAssets().ToArrayAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnAssetclicked(Asset asset)
+    {
+        if (asset.Position != null)
+        {
+            _mapService.MoveTo(asset.Position.Latitude, asset.Position.Longitude);
+        }
+    }
+
+    private Asset[]? _assets;
+}
